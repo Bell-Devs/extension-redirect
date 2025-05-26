@@ -1,1 +1,294 @@
-Hi!
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple CAPTCHA Frontend</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+            margin: 0;
+            flex-direction: column; /* For submit button below captcha */
+        }
+
+        .captcha-container {
+            background-color: #fff;
+            padding: 20px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 1px solid #ddd;
+            transition: border-color 0.3s ease;
+            min-width: 300px; /* Ensure it doesn't look too small */
+        }
+
+        .captcha-container.loading {
+            border-color: #007bff;
+        }
+        .captcha-container.verified {
+            border-color: #28a745;
+        }
+        .captcha-container.failed {
+            border-color: #dc3545;
+        }
+
+        #captcha-checkbox {
+            /* Visually hide the default checkbox but keep it accessible */
+            opacity: 0;
+            position: absolute;
+            width: 1px;
+            height: 1px;
+        }
+
+        .captcha-checkbox-custom {
+            width: 28px;
+            height: 28px;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+            flex-shrink: 0; /* Prevent shrinking if label is long */
+        }
+
+        #captcha-checkbox:focus + .captcha-checkbox-custom {
+            outline: 2px solid #007bff;
+            outline-offset: 2px;
+        }
+
+        .captcha-checkbox-custom .icon {
+            font-size: 18px;
+            display: none; /* Hidden by default */
+            color: #fff;
+        }
+
+        /* Spinner Icon */
+        .spinner {
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #007bff;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Checkmark Icon (simple CSS) */
+        .checkmark::before {
+            content: '✓';
+            color: #28a745;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        /* Error Icon (simple CSS) */
+        .error-icon::before {
+            content: '✕';
+            color: #dc3545;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+
+        .captcha-label {
+            font-size: 16px;
+            color: #333;
+            user-select: none; /* Prevent text selection */
+            cursor: pointer;
+        }
+
+        .captcha-status {
+            margin-left: auto; /* Pushes status to the right */
+            font-size: 14px;
+            min-width: 70px; /* Space for status text */
+            text-align: right;
+        }
+
+        .captcha-status.verifying { color: #007bff; }
+        .captcha-status.verified { color: #28a745; }
+        .captcha-status.failed { color: #dc3545; }
+
+        /* Submit Button */
+        .submit-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, opacity 0.2s ease;
+        }
+
+        .submit-button:disabled {
+            background-color: #aaa;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .submit-button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="captcha-container" id="captchaContainer">
+        <input type="checkbox" id="captcha-checkbox" aria-labelledby="captchaLabelText">
+        <label for="captcha-checkbox" class="captcha-checkbox-custom" id="captchaCheckboxCustom">
+            <!-- Icons will be injected here by JS -->
+        </label>
+        <label for="captcha-checkbox" class="captcha-label" id="captchaLabelText">I am not a robot</label>
+        <div class="captcha-status" id="captchaStatus"></div>
+        <!-- Hidden input to store a simulated token for form submission -->
+        <input type="hidden" name="captcha-token" id="captchaToken">
+    </div>
+
+    <button class="submit-button" id="submitBtn" disabled>Submit Form</button>
+
+    <script>
+        const captchaCheckbox = document.getElementById('captcha-checkbox');
+        const captchaCheckboxCustom = document.getElementById('captchaCheckboxCustom');
+        const captchaLabelText = document.getElementById('captchaLabelText');
+        const captchaStatus = document.getElementById('captchaStatus');
+        const captchaContainer = document.getElementById('captchaContainer');
+        const captchaTokenInput = document.getElementById('captchaToken');
+        const submitButton = document.getElementById('submitBtn');
+
+        let isVerifying = false;
+        let isVerified = false;
+
+        function setCaptchaState(state) {
+            // Clear previous states
+            captchaContainer.classList.remove('loading', 'verified', 'failed');
+            captchaCheckboxCustom.innerHTML = ''; // Clear previous icons
+            captchaStatus.textContent = '';
+            captchaStatus.className = 'captcha-status'; // Reset status class
+
+            switch (state) {
+                case 'initial':
+                    captchaCheckbox.checked = false;
+                    captchaCheckbox.disabled = false;
+                    captchaLabelText.textContent = 'I am not a robot';
+                    isVerified = false;
+                    submitButton.disabled = true;
+                    captchaTokenInput.value = '';
+                    break;
+                case 'loading':
+                    captchaContainer.classList.add('loading');
+                    const spinner = document.createElement('div');
+                    spinner.className = 'spinner';
+                    captchaCheckboxCustom.appendChild(spinner);
+                    captchaLabelText.textContent = 'Verifying...';
+                    captchaStatus.textContent = 'Please wait';
+                    captchaStatus.classList.add('verifying');
+                    captchaCheckbox.disabled = true;
+                    isVerifying = true;
+                    break;
+                case 'verified':
+                    captchaContainer.classList.add('verified');
+                    const checkmark = document.createElement('div');
+                    checkmark.className = 'checkmark'; // Simple CSS checkmark
+                    captchaCheckboxCustom.appendChild(checkmark);
+                    captchaCheckboxCustom.style.borderColor = '#28a745'; // Green border for custom checkbox
+                    captchaCheckboxCustom.style.backgroundColor = '#e9f7ef';
+                    captchaLabelText.textContent = 'You are human!';
+                    captchaStatus.textContent = 'Verified';
+                    captchaStatus.classList.add('verified');
+                    captchaCheckbox.checked = true;
+                    captchaCheckbox.disabled = true; // Usually remains disabled after success
+                    isVerifying = false;
+                    isVerified = true;
+                    submitButton.disabled = false;
+                    captchaTokenInput.value = 'SIMULATED_CAPTCHA_TOKEN_' + Date.now(); // Simulate a token
+                    break;
+                case 'failed':
+                    captchaContainer.classList.add('failed');
+                    const errorIcon = document.createElement('div');
+                    errorIcon.className = 'error-icon'; // Simple CSS error icon
+                    captchaCheckboxCustom.appendChild(errorIcon);
+                    captchaCheckboxCustom.style.borderColor = '#dc3545'; // Red border
+                    captchaCheckboxCustom.style.backgroundColor = '#fdecea';
+                    captchaLabelText.textContent = 'Verification failed';
+                    captchaStatus.textContent = 'Please try again';
+                    captchaStatus.classList.add('failed');
+                    captchaCheckbox.checked = false;
+                    captchaCheckbox.disabled = false; // Allow retry
+                    isVerifying = false;
+                    isVerified = false;
+                    submitButton.disabled = true;
+                    captchaTokenInput.value = '';
+                    // Reset to initial after a short delay to allow user to see the error
+                    setTimeout(() => {
+                        if (!isVerified && !isVerifying) { // Only reset if still in failed state
+                           setCaptchaState('initial');
+                        }
+                    }, 2500);
+                    break;
+            }
+        }
+
+        captchaCheckbox.addEventListener('change', function() {
+            if (this.checked && !isVerifying && !isVerified) {
+                setCaptchaState('loading');
+
+                // Simulate backend verification
+                setTimeout(() => {
+                    const success = Math.random() > 0.3; // 70% chance of success
+                    if (success) {
+                        setCaptchaState('verified');
+                    } else {
+                        setCaptchaState('failed');
+                    }
+                }, 1500 + Math.random() * 1000); // Simulate 1.5-2.5 second delay
+            } else if (!this.checked && isVerified) {
+                // If user somehow unchecks a verified box (e.g. dev tools), reset
+                // Or if you want to allow "un-verifying"
+                // For this example, let's assume verified means it stays checked and disabled.
+                // If you want to allow unchecking to reset:
+                // setCaptchaState('initial');
+            }
+        });
+
+        // Allow clicking the label or custom checkbox to toggle the actual checkbox
+        captchaCheckboxCustom.addEventListener('click', () => {
+            if (!captchaCheckbox.disabled) captchaCheckbox.click();
+        });
+        captchaLabelText.addEventListener('click', () => {
+             if (!captchaCheckbox.disabled) captchaCheckbox.click();
+        });
+
+
+        // Initial state
+        setCaptchaState('initial');
+
+        // Form submission simulation
+        submitButton.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent actual form submission for this demo
+            if (isVerified) {
+                alert('Form submitted with CAPTCHA Token: ' + captchaTokenInput.value);
+                // Here you would typically submit the form data including captchaTokenInput.value
+                // For demo, let's reset captcha
+                setCaptchaState('initial');
+            } else {
+                alert('Please verify you are not a robot first!');
+            }
+        });
+
+    </script>
+</body>
+</html>
