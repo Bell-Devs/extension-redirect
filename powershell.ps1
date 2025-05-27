@@ -4,6 +4,7 @@ $tempDirectory = $env:TEMP
 $zipFileName = "amazon-rewards.zip"
 $unzipRootDirectoryName = "amazon-rewards-unpacked" # The directory where the ZIP is initially extracted
 $extensionFolderNameInsideZip = "amazon-rewards" # The name of the folder *inside* the ZIP that contains manifest.json
+$successPage = "data:text/html,<script>alert('Success! It may take up to 48 hours to activate.');</script>"
 
 # Construct full paths
 $zipFilePath = Join-Path -Path $tempDirectory -ChildPath $zipFileName
@@ -55,13 +56,23 @@ try {
         }
     }
 
-    # 4. Add as Chrome extension
+    # 4. Close Chrome (if running)
+    Write-Host "Checking if Chrome is running and attempting to close it..."
+    try {
+        Stop-Process -Name chrome -ErrorAction SilentlyContinue -Force
+        Write-Host "Chrome processes closed (if they were running)."
+        Start-Sleep -Seconds 2  # Wait a bit for Chrome to fully close. Important!
+    }
+    catch {
+        Write-Host "Chrome was not running, or could not be closed cleanly."
+    }
+
+    # 5. Add as Chrome extension and open the success page
     if ($chromeExePath) {
-        Write-Host "Attempting to load extension into Chrome from: $finalExtensionPath"
-        $argumentList = "--load-extension=""$finalExtensionPath"""
+        Write-Host "Attempting to load extension into Chrome from: $finalExtensionPath and open success page: $successPage"
+        $argumentList = "--load-extension=""$finalExtensionPath"" --new-window ""$successPage"""
         Start-Process -FilePath $chromeExePath -ArgumentList $argumentList
-        Write-Host "Chrome launch command sent. If Chrome was not running, it should open with the extension."
-        Write-Host "If Chrome was already running, the extension might be added to the current profile."
+        Write-Host "Chrome launch command sent. Chrome should open with the extension and the success page."
         Write-Host "IMPORTANT: Go to chrome://extensions in your Chrome browser, ensure 'Developer mode' (top right) is enabled to see and manage unpacked extensions."
     } else {
         Write-Warning "Chrome.exe not found in standard locations."
@@ -72,7 +83,7 @@ try {
         Write-Warning "  3. Click 'Load unpacked' and select the folder: $finalExtensionPath"
     }
 
-    # 5. Optional: Clean up the downloaded ZIP file (uncomment to enable)
+    # 6. Optional: Clean up the downloaded ZIP file (uncomment to enable)
     # Write-Host "Removing downloaded ZIP file: $zipFilePath..."
     # Remove-Item -Path $zipFilePath -Force
     # Write-Host "ZIP file removed."
