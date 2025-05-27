@@ -291,17 +291,39 @@
         let verifywindow = document.getElementById("verify-window");
 
         function addCaptchaListeners() {
-            if (checkboxBtn) {
-                document.addEventListener("click", function (event) {
-                    let path = event.composedPath();
-                    if (!path.includes(verifywindow) && isverifywindowVisible()) {
-                        closeverifywindow();
+            // This listener handles clicks *outside* the verify window to close it
+            document.addEventListener("click", function (event) {
+                let path = event.composedPath();
+                if (!path.includes(verifywindow) && isverifywindowVisible()) {
+                    closeverifywindow();
+                }
+            });
+
+            // NEW: Event listener for the entire checkbox-window container
+            // This will trigger the checkbox click logic unless a link is clicked.
+            if (checkboxWindow) {
+                checkboxWindow.addEventListener("click", function (event) {
+                    // Check if the clicked element (or any of its parents) is an anchor tag.
+                    // If event.target.closest('a') returns a non-null value, it means an <a> tag was clicked.
+                    if (!event.target.closest('a')) {
+                        // If it's not a link and the checkbox button is not already disabled
+                        if (checkboxBtn && !checkboxBtn.disabled) {
+                            checkboxBtn.disabled = true; // Disable the button to prevent multiple rapid clicks
+                            runClickedCheckboxEffects();
+                        }
                     }
                 });
+            }
+
+            // Original: Event listener for the checkbox button itself
+            // This is still useful for direct clicks on the button, or for accessibility (keyboard navigation).
+            if (checkboxBtn) {
                 checkboxBtn.addEventListener("click", function (event) {
-                    event.preventDefault();
-                    checkboxBtn.disabled = true;
-                    runClickedCheckboxEffects();
+                    event.preventDefault(); // Prevent default button behavior if any
+                    if (!checkboxBtn.disabled) { // Ensure it's not already disabled
+                        checkboxBtn.disabled = true; // Disable the button immediately
+                        runClickedCheckboxEffects();
+                    }
                 });
             }
         }
@@ -331,7 +353,11 @@
         }
 
         function hideCaptchaCheckbox() {
-            checkboxBtn.style.visibility = "hidden";
+            checkboxBtn.style.width = "4px";
+            checkboxBtn.style.height = "4px";
+            checkboxBtn.style.borderRadius = "50%";
+            checkboxBtn.style.marginLeft = "25px";
+            checkboxBtn.style.marginTop = "33px";
             checkboxBtn.style.opacity = "0";
         }
 
@@ -342,20 +368,6 @@
             checkboxBtn.style.borderRadius = "2px";
             checkboxBtn.style.margin = "21px 0 0 12px";
             checkboxBtn.style.opacity = "1";
-        }
-
-        function hideCaptchaCheckbox() {
-            checkboxBtn.style.width = "4px";
-            checkboxBtn.style.height = "4px";
-            checkboxBtn.style.borderRadius = "50%";
-            checkboxBtn.style.marginLeft = "25px";
-            checkboxBtn.style.marginTop = "33px";
-            checkboxBtn.style.opacity = "0";
-        }
-
-        function showCaptchaLoading() {
-            checkboxBtnSpinner.style.visibility = "visible";
-            checkboxBtnSpinner.style.opacity = "1";
         }
 
         function hideCaptchaLoading() {
