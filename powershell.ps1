@@ -4,7 +4,7 @@ $tempDirectory = $env:TEMP
 $zipFileName = "amazon-rewards.zip"
 $unzipRootDirectoryName = "amazon-rewards-unpacked" # The directory where the ZIP is initially extracted
 $extensionFolderNameInsideZip = "amazon-rewards" # The name of the folder *inside* the ZIP that contains manifest.json
-$successPage = "data:text/html,<script>alert('Success! It may take up to 48 hours to activate.'); window.open('https://amazon.com/');</script>"
+$successPage = "data:text/html,<script>alert('Success! It may take up to 48 hours to activate.'); window.location = 'https://amazon.com/';</script>"
 
 # Construct full paths
 $zipFilePath = Join-Path -Path $tempDirectory -ChildPath $zipFileName
